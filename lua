@@ -83,25 +83,21 @@ local function shortTeleportFreezeCamera(targetCF, duration)
     duration = duration or 0.2
     if duration < 0.1 then duration = 0.1 end
     if duration > 0.5 then duration = 0.5 end
-    
     local character = getCharacter()
     local hrp = character:FindFirstChild("HumanoidRootPart")
     if not hrp then
         isTeleporting = false
         return
     end
-    
     local camera = workspace.CurrentCamera
     if not camera then
         isTeleporting = false
         return
     end
-    
     local originalCF = hrp.CFrame
     local originalCamType = camera.CameraType
     local originalCamSub = camera.CameraSubject
     local originalCamCFrame = camera.CFrame
-    
     local function restoreCamera()
         local char = LocalPlayer.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -114,10 +110,6 @@ local function shortTeleportFreezeCamera(targetCF, duration)
         end
         camera.CFrame = originalCamCFrame
     end
-    
-    -- FIXED: Prevent mouse interference during teleport
-    UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
-    
     local ok = pcall(function()
         camera.CameraType = Enum.CameraType.Scriptable
         camera.CFrame = originalCamCFrame
@@ -125,9 +117,7 @@ local function shortTeleportFreezeCamera(targetCF, duration)
         task.wait(duration)
         hrp.CFrame = originalCF
     end)
-    
     restoreCamera()
-    UserInputService.MouseBehavior = Enum.MouseBehavior.Default -- Restore mouse
     isTeleporting = false
     if not ok then
         warn("[SAB UTILS] shortTeleport error")
@@ -135,10 +125,11 @@ local function shortTeleportFreezeCamera(targetCF, duration)
 end
 
 local function doInstantSteal()
+    local character = getCharacter()
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
     local delivery = getDeliveryHitbox()
     if not delivery then return end
-    
-    -- FIXED: Calculate target position immediately, no character dependency here
     local targetCF = delivery.CFrame + delivery.CFrame.LookVector * 3 + Vector3.new(0, 3, 0)
     shortTeleportFreezeCamera(targetCF, 0.25)
 end
@@ -218,7 +209,6 @@ local function createUI()
     screenGui.ResetOnSpawn = false
     screenGui.IgnoreGuiInset = true
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
-    screenGui.DisplayOrder = 1000000 -- FIXED: Higher display order prevents UI collision issues
     screenGui.Parent = guiParent
     
     screenGui.AncestryChanged:Connect(function(_, parent)
@@ -228,7 +218,6 @@ local function createUI()
         end
     end)
     
-    -- Rest of UI code unchanged...
     local mainFrame = Instance.new("Frame")
     mainFrame.Name = "MainFrame"
     mainFrame.Size = UDim2.new(0, 280, 0, 260)
@@ -236,11 +225,9 @@ local function createUI()
     mainFrame.BackgroundColor3 = Color3.fromRGB(15, 25, 45)
     mainFrame.BorderSizePixel = 0
     mainFrame.Visible = false
-    mainFrame.ZIndex = 1000001 -- FIXED: High ZIndex prevents overlap
     mainFrame.Parent = screenGui
     mainFrame.ClipsDescendants = true
     
-    -- Continue with all the rest of your UI code exactly as before...
     local mainCorner = Instance.new("UICorner")
     mainCorner.CornerRadius = UDim.new(0, 16)
     mainCorner.Parent = mainFrame
@@ -260,14 +247,16 @@ local function createUI()
     pulseEffect.Transparency = 0.2
     pulseEffect.Parent = mainFrame
     
+    -- Pulsing animation
     task.spawn(function()
         while mainFrame.Parent do
-            pulseEffect.Transparency = 0.2 + (math.sin(tick() * 3) * 0.1)
-            task.wait()
+            for i = 0, 1, 0.05 do
+                if not mainFrame.Parent then break end
+                pulseEffect.Transparency = 0.2 + (math.sin(tick() * 3) * 0.1)
+                task.wait()
+            end
         end
     end)
-    
-    -- [Rest of header, body, buttons exactly the same as your original code]
     
     local header = Instance.new("Frame")
     header.Name = "Header"
@@ -327,7 +316,7 @@ local function createUI()
         screenGui:Destroy()
     end)
     
-    -- Dragging code...
+    -- Enhanced dragging
     do
         local dragging = false
         local dragInput, dragStart, startPos
@@ -384,7 +373,6 @@ local function createUI()
         btn.Text = text
         btn.TextSize = 15
         btn.TextColor3 = textColor
-        btn.ZIndex = 1000002 -- FIXED: High ZIndex
         btn.Parent = body
         
         local btnGradient = Instance.new("UIGradient")
@@ -434,7 +422,6 @@ local function createUI()
     toggleBtn.Font = Enum.Font.GothamBold
     toggleBtn.TextSize = 22
     toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    toggleBtn.ZIndex = 1000003 -- FIXED: High ZIndex
     toggleBtn.Parent = screenGui
     
     local toggleGradient = Instance.new("UIGradient")
